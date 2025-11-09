@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spanish Vocab Practice</title>
+  <style>
+    :root {
+      --bg: #071029;
+      --card: #0f1630;
+      --muted: #9fb0e6;
+      --ink: #eaf0ff;
+      --accent: #6ea8ff;
+      --good: #40d77e;
+      --bad: #ff6b6b;
+      --glass: rgba(255,255,255,0.04);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; color: var(--ink); background: linear-gradient(180deg, #071029 0%, #071029 40%, #041225 100%); display: grid; place-items: center; padding: 28px; }
+    .app { width: min(980px, 96vw); background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius: 18px; padding: 22px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 18px 60px rgba(2,6,23,0.6); }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    h1 { margin: 0; font-size: 20px; }
+    .subtitle { color: var(--muted); font-size: 13px; }
+    .card { background: var(--card); border-radius: 14px; padding: 20px; border: 1px solid rgba(255,255,255,0.04); display: grid; gap: 14px; }
+    .row { display: flex; gap: 12px; align-items: center; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pill { background: var(--glass); padding: 8px 12px; border-radius: 999px; font-size: 13px; color: var(--muted); border: 1px solid rgba(255,255,255,0.03); }
+    .prompt-wrap { display: grid; gap: 6px; align-items: center; }
+    .dir { color: var(--muted); font-size: 13px; text-align: center; }
+    .prompt { font-size: 24px; font-weight: 600; text-align: center; }
+    .answer-area { display: flex; align-items: center; gap: 10px; }
+    input[type=text] { flex: 1; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.25); font-size: 18px; color: var(--ink); outline: none; text-align: center; }
+    .btnrow { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    button { background: var(--accent); color: #041225; border: none; padding: 10px 14px; border-radius: 10px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 18px rgba(110,168,255,0.14); transition: transform .12s ease; }
+    button.secondary { background: transparent; color: var(--muted); border: 1px solid rgba(255,255,255,0.04); }
+    button.ghost { background: transparent; color: var(--muted); border: 1px dashed rgba(255,255,255,0.04); }
+    button:active { transform: translateY(1px); }
+    .feedback { min-height: 36px; text-align: center; font-weight: 600; }
+    .ok { color: var(--good); }
+    .no { color: var(--bad); }
+    .hint { color: var(--muted); font-weight: 500; }
+    .footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .admin-panel { display: none; background: var(--card); border-radius: 14px; padding: 20px; border: 1px solid rgba(255,255,255,0.04); margin-top: 14px; }
+    .admin-panel.show { display: block; }
+    .form-group { margin-bottom: 10px; }
+    label { display: block; margin-bottom: 5px; color: var(--ink); }
+    textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.25); color: var(--ink); resize: vertical; }
+    select { padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.25); color: var(--ink); }
+    input[type=password] { padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.25); color: var(--ink); }
+    .small { font-size: 13px; color: var(--muted); }
+    @media (max-width: 700px) { .prompt { font-size: 20px; } input[type=text] { font-size: 16px; padding: 12px; } }
+  </style>
+</head>
+<body>
+  <div class="app" role="application">
+    <header>
+      <div>
+        <h1>Spanish Vocab Practice</h1>
+        <div class="subtitle">Select a chapter and press Start. Admin for adding vocab (password protected).</div>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <select id="chapterSelect" class="pill" style="background: var(--glass); border: 1px solid rgba(255,255,255,0.03); color: var(--muted);">
+          <!-- Chapters will be populated by JS -->
+        </select>
+        <button id="adminBtn" class="secondary">Admin</button>
+      </div>
+    </header>
+
+    <main class="card" id="card">
+      <div class="row" style="justify-content:center">
+        <div class="pill" id="progressPill">0 / 0</div>
+        <div class="pill" id="streakPill">Streak: 0</div>
+      </div>
+
+      <div class="prompt-wrap">
+        <div class="dir" id="direction">Select chapter and press Start</div>
+        <div class="prompt" id="prompt">—</div>
+      </div>
+
+      <div class="answer-area">
+        <input id="answer" type="text" placeholder="Type your answer (press Enter)" autocomplete="off" />
+      </div>
+
+      <div class="btnrow">
+        <button id="checkBtn">Check (Enter)</button>
+        <button id="idkBtn" class="secondary">I don't know</button>
+        <button id="showBtn" class="ghost">Show answer</button>
+        <button id="stopBtn" class="secondary">Stop showing</button>
+        <button id="skipBtn" class="secondary">Next</button>
+        <button id="startBtn">Start</button>
+      </div>
+
+      <div class="feedback" id="feedback"></div>
+
+      <div class="footer" style="margin-top:6px">
+        <div class="subtitle">Tip: Arrow → moves to next (unless the answer is locked).</div>
+        <div style="display:flex;gap:8px"><div class="pill">Random direction</div></div>
+      </div>
+
+      <div class="admin-panel" id="adminPanel" aria-hidden="true">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="small">Admin: default password is <strong>admin</strong>. Change it below.</div>
+          <button id="closeAdmin" class="secondary">Close</button>
+        </div>
+
+        <div class="form-group">
+          <label>Select or type chapter name</label>
+          <input id="adminChapter" type="text" placeholder="e.g. Chapter 4" />
+        </div>
+
+        <div class="form-group" style="display:flex;gap:8px">
+          <div style="flex:1">
+            <label>Spanish (term)</label>
+            <input id="adminEs" type="text" placeholder="Spanish term" />
+          </div>
+          <div style="flex:1">
+            <label>English (definition)</label>
+            <input id="adminEn" type="text" placeholder="English translation" />
+          </div>
+        </div>
+
+        <div class="form-group" style="display:flex;gap:8px;align-items:center">
+          <input id="adminPassword" type="password" placeholder="admin password" />
+          <button id="addVocabBtn">Add vocab</button>
+        </div>
+
+        <hr />
+
+        <div class="form-group">
+          <label>Paste Quizlet text here (tab separated or alternating lines)</label>
+          <textarea id="quizletText" rows="6" placeholder="term[TAB]definition\nor\nterm\ndefinition\nterm\ndefinition"></textarea>
+        </div>
+        <div class="form-group" style="display:flex;gap:8px;align-items:center">
+          <input id="quizletPassword" type="password" placeholder="admin password" />
+          <button id="importQuizletBtn">Import Quizlet</button>
+        </div>
+
+        <hr />
+        <div class="form-group" style="display:flex;gap:8px;align-items:center">
+          <input id="curPassword" type="password" placeholder="current password" />
+          <input id="newPassword" type="password" placeholder="new password" />
+          <button id="changePasswordBtn" class="secondary">Change password</button>
+        </div>
+
+        <div id="adminMsg" class="small" style="margin-top:8px;color:var(--muted)"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    // --- initial chapters collected from existing files ---
+    const initialChapters = {
+      "Chapter 2": [
+        {es:"Pues ven.", en:"So come on."},
+        {es:"Vamos, anímate.", en:"Come on. Cheer up."},
+        {es:"Arrancar", en:"To go / to start (a race / a car)"},
+        {es:"Atreverse", en:"To dare"},
+        {es:"La carrera", en:"Race"},
+        {es:"Deber", en:"To owe"},
+        {es:"Doler", en:"To hurt"},
+        {es:"Hacer trampa", en:"To cheat"},
+        {es:"Retar", en:"To challenge"},
+        {es:"El truco", en:"Trick"},
+        {es:"El ajedrez", en:"Chess"},
+        {es:"El billar", en:"Pool / billiards"},
+        {es:"El boliche", en:"Bowling"},
+        {es:"Las cartas", en:"Playing cards"},
+        {es:"Los naipes", en:"Playing cards"},
+        {es:"El juego de mesa", en:"Board game"},
+        {es:"El pasatiempo", en:"Pastime"},
+        {es:"La televisión", en:"Television"},
+        {es:"El tiempo libre", en:"Free time"},
+        {es:"Los ratos libres", en:"Free time"},
+        {es:"El videojuego", en:"Video game"},
+        {es:"Aburrirse", en:"To get bored"},
+        {es:"Alquilar una película", en:"To rent a movie"},
+        {es:"Brindar", en:"To make a toast"},
+        {es:"Celebrar", en:"To celebrate"},
+        {es:"Festejar", en:"To celebrate"},
+        {es:"Dar un paseo", en:"To take a stroll / walk"},
+        {es:"Disfrutar de", en:"To enjoy"},
+        {es:"Divertirse", en:"To have fun"},
+        {es:"Entretener", en:"To entertain / to amuse"},
+        {es:"Entretenerse", en:"To entertain / to amuse"},
+        {es:"Gustar", en:"To like"},
+        {es:"Reunirse con", en:"To get together with"},
+        {es:"Salir a comer", en:"To go out to eat"},
+        {es:"Aficionado", en:"Fond of / a fan of"},
+        {es:"Divertido", en:"Fun"},
+        {es:"Entretenido", en:"Entertaining"},
+        {es:"El cine", en:"Movie theater / cinema"},
+        {es:"El circo", en:"Circus"},
+        {es:"La discoteca", en:"Discotheque / dance club"},
+        {es:"La feria", en:"Fair"},
+        {es:"El festival", en:"Festival"},
+        {es:"El parque de atracciones", en:"Amusement park"},
+        {es:"El zoológico", en:"Zoo"},
+        {es:"El árbitro / la árbitra", en:"Referee"},
+        {es:"El campeón / la campeona", en:"Champion"},
+        {es:"El campeonato", en:"Championship"},
+        {es:"El club deportivo", en:"Sports club"},
+        {es:"El deportista / la deportista", en:"Athlete"},
+        {es:"El empate", en:"Tie game"},
+        {es:"El entrenador / la entrenadora", en:"Coach / trainer"},
+        {es:"El equipo", en:"Team"},
+        {es:"El espectador / la espectadora", en:"Spectator"},
+        {es:"El torneo", en:"Tournament"},
+        {es:"Anotar / marcar un gol", en:"To score a goal"},
+        {es:"Anotar / marcar un punto", en:"To score a point"},
+        {es:"Desafiar", en:"To challenge"},
+        {es:"Empatar", en:"To tie (game)"},
+        {es:"Ganar un partido", en:"To win a game"},
+        {es:"Perder un partido", en:"To lose a game"},
+        {es:"Vencer", en:"To defeat"},
+        {es:"El álbum", en:"Album"},
+        {es:"El asiento", en:"Seat"},
+        {es:"El cantante / la cantante", en:"Singer"},
+        {es:"El concierto", en:"Concert"},
+        {es:"El conjunto", en:"Musical group / band"},
+        {es:"El grupo musical", en:"Musical group / band"},
+        {es:"El escenario", en:"Scenery / stage"},
+        {es:"El espectáculo", en:"Show"},
+        {es:"El estreno", en:"Premiere / debut"},
+        {es:"La función", en:"Performance (theater / movie)"},
+        {es:"El músico / la música", en:"Musician"},
+        {es:"La obra de teatro", en:"Play"},
+        {es:"La taquilla", en:"Box office"},
+        {es:"Aplaudir", en:"To applaud"},
+        {es:"Conseguir boletos", en:"To get tickets"},
+        {es:"Conseguir entradas", en:"To get tickets"},
+        {es:"Hacer cola", en:"To wait in line"},
+        {es:"Poner un disco compacto", en:"To play a CD"},
+        {es:"La aceituna", en:"Olive"}
+      ],
+      "Chapter 3": [
+        {es:"¡Una ganga!", en:"A bargain!"}, {es:"Arruinar", en:"To ruin"}, {es:"La artesanía", en:"Handicraft"}, {es:"La broma", en:"Joke"}, {es:"La disculpa", en:"Apology"}, {es:"Humilde", en:"Humble"}, {es:"Pálido", en:"Pale"}, {es:"Retrasarse", en:"To be delayed / to be late"}, {es:"El balcón", en:"Balcony"}, {es:"La escalera", en:"Staircase"}, {es:"El hogar", en:"Home / fireplace"}, {es:"La limpieza", en:"Cleaning"}, {es:"Los muebles", en:"Furniture"}, {es:"Los quehaceres", en:"Chores"}, {es:"Apagar", en:"To turn off"}, {es:"Barrer", en:"To sweep"}, {es:"Calentar (e-ie)", en:"To warm up"}, {es:"Cocinar", en:"To cook"}, {es:"Encender (e-ie)", en:"To turn on"}, {es:"Freír (e-i)", en:"To fry"}, {es:"Hervir", en:"To boil"}, {es:"Lavar", en:"To wash"}, {es:"Limpiar", en:"To clean"}, {es:"Pasar la aspiradora", en:"To vacuum"}, {es:"Poner la mesa", en:"To set the table"}, {es:"Quitar la mesa", en:"To clear the table"}, {es:"Quitar el polvo", en:"To dust"}, {es:"Tocar el timbre", en:"To ring the doorbell"}, {es:"El centro comercial", en:"Mall"}, {es:"El dinero en efectivo", en:"Cash"}, {es:"La ganga", en:"Bargain"}, {es:"El probador", en:"Dressing room"}, {es:"El reembolso", en:"Refund"}, {es:"El supermercado", en:"Supermarket"}, {es:"La tarjeta de crédito", en:"Credit card"}, {es:"La tarjeta de débito", en:"Debit card"}, {es:"Devolver (o-ue)", en:"To return (items)"}, {es:"Hacer mandados", en:"To run errands"}, {es:"Ir de compras", en:"To go shopping"}, {es:"Probarse (o-ue)", en:"To try on"}, {es:"Seleccionar", en:"To select / to pick out"}, {es:"Auténtico", en:"Authentic"}, {es:"Barato", en:"Cheap"}, {es:"Caro", en:"Expensive"}
+      ],
+      "Chapter 4": [
+        {es:'Es mejor que se quede esta noche en el hospital', en:'It is better that she stay at the hospital overnight.'}, {es:'Es urgente que la establicemos', en:"It's urgent that we stabilize her."}, {es:'¡Espero que no sea una broma, Manu!', en:'I hope this is not a joke, Manu.'}, {es:'Necesito que estés tranquilo', en:'I need you to stay calm.'}, {es:'Necesito que pises el acelerador y vengas al hospital', en:'I need you to step on the gas and get to the hospital.'}, {es:'¡Agárrate!', en:'Hold on!'}, {es:'¡Détente!', en:'Stop!'}, {es:'¡Espera!', en:'Wait!'}, {es:'¡No seas ridícula!', en:"Don't be ridiculous!"}, {es:'Relájese y espere acá, por favor', en:'Relax and wait here, please.'}, {es:'Shhh, no hagan ruido por si acaso está durmiendo', en:"Shhh, don't make any noise in case she's sleeping."}, {es:'Arreglárselas', en:'To manage to'}, {es:'Detenerse', en:'To stop'}, {es:'¡No es para tanto!', en:"It's not a big deal!"}, {es:'¡Por Dios!', en:"For God's sake!"}, {es:'Por lo visto', en:'Apparently'}
+      ]
+    };
+
+    // --- storage keys and password setup ---
+    const STORAGE_KEY = 'svp_chapters_v1';
+    const PW_KEY = 'svp_password_b64_v1';
+
+    // default password (obfuscated with base64) — default is 'admin'
+    if(!localStorage.getItem(PW_KEY)) localStorage.setItem(PW_KEY, btoa('admin'));
+
+    function loadChapters(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return {...initialChapters};
+        const parsed = JSON.parse(raw);
+        return {...initialChapters, ...parsed}; // merge so initial chapters are preserved unless user overwrote
+      }catch(e){ return {...initialChapters}; }
+    }
+
+    function saveChapters(chapters){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(chapters));
+    }
+
+    // --- elements ---
+    const els = {
+      chapterSelect: document.getElementById('chapterSelect'),
+      direction: document.getElementById('direction'),
+      prompt: document.getElementById('prompt'),
+      answer: document.getElementById('answer'),
+      feedback: document.getElementById('feedback'),
+      progressPill: document.getElementById('progressPill'),
+      streakPill: document.getElementById('streakPill'),
+      startBtn: document.getElementById('startBtn'),
+      checkBtn: document.getElementById('checkBtn'),
+      idkBtn: document.getElementById('idkBtn'),
+      showBtn: document.getElementById('showBtn'),
+      stopBtn: document.getElementById('stopBtn'),
+      skipBtn: document.getElementById('skipBtn'),
+      adminBtn: document.getElementById('adminBtn'),
+      adminPanel: document.getElementById('adminPanel'),
+      closeAdmin: document.getElementById('closeAdmin'),
+      adminChapter: document.getElementById('adminChapter'),
+      adminEs: document.getElementById('adminEs'),
+      adminEn: document.getElementById('adminEn'),
+      adminPassword: document.getElementById('adminPassword'),
+      addVocabBtn: document.getElementById('addVocabBtn'),
+      quizletText: document.getElementById('quizletText'),
+      quizletPassword: document.getElementById('quizletPassword'),
+      importQuizletBtn: document.getElementById('importQuizletBtn'),
+      adminMsg: document.getElementById('adminMsg'),
+      curPassword: document.getElementById('curPassword'),
+      newPassword: document.getElementById('newPassword'),
+      changePasswordBtn: document.getElementById('changePasswordBtn')
+    };
+
+    // --- state ---
+    let chapters = loadChapters();
+    let items = [], index = -1, current = null;
+    let total = 0, correct = 0, streak = 0;
+    let locked = false;
+
+    // --- utilities ---
+    function shuffle(a){ const arr = [...a]; for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]} return arr; }
+
+    function normalizeSegment(s){
+      if(!s) return '';
+      s = String(s).toLowerCase();
+      s = s.replace(/\(.*?\)/g, '');
+      s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      s = s.replace(/[^a-z0-9ñü\s/]/g, ' ');
+      s = s.replace(/\b(to|the|a|an|el|la|los|las|un|una|unos|unas)\b/g, ' ');
+      s = s.replace(/\s+/g, ' ').trim();
+      return s;
+    }
+
+    function isCorrect(input, target){
+      const inN = normalizeSegment(input);
+      const parts = String(target).split('/').map(p=>normalizeSegment(p)).filter(Boolean);
+      if(parts.length===0) return inN === normalizeSegment(target);
+      return parts.some(p => p === inN);
+    }
+
+    function updatePills(){
+      els.progressPill.textContent = items.length ? `${index+1} / ${items.length}` : '0 / 0';
+      els.streakPill.textContent = `Streak: ${streak}`;
+    }
+
+    function setPrompt(showSpanish){
+      if(!current) return;
+      els.direction.textContent = showSpanish ? 'Type the English:' : 'Escribe en español:';
+      els.prompt.textContent = showSpanish ? current.es : current.en;
+      els.answer.dataset.target = showSpanish ? current.en : current.es;
+      els.answer.value = '';
+      els.answer.focus();
+      els.feedback.textContent = '';
+      updatePills();
+    }
+
+    function next(){ if(locked) return; if(items.length===0){ els.prompt.textContent='No items.'; return; } index=(index+1)%items.length; current = items[index]; const showSpanish = Math.random()<0.5; setPrompt(showSpanish); }
+
+    // --- practice actions ---
+    function start(){
+      const chap = els.chapterSelect.value;
+      if(!chap || !chapters[chap] || chapters[chap].length===0){ els.feedback.textContent='No vocab for this chapter.'; return; }
+      items = shuffle(chapters[chap]); index=-1; current=null; total=0; correct=0; streak=0; locked=false; els.feedback.textContent=''; updatePills(); next();
+    }
+
+    function check(){ if(!current) return; const input = els.answer.value||''; const target = els.answer.dataset.target||''; total++; if(isCorrect(input,target)){ correct++; streak++; els.feedback.innerHTML = `<span class='ok'>✓ Correct!</span>`; if(!locked) setTimeout(next,550); else{ locked=false; setTimeout(next,550); } } else { streak=0; els.feedback.innerHTML = `<div class='no'>✗ Not quite.</div><div class='hint'>Answer: ${escapeHtml(target)}</div>`; locked=true; } updatePills(); }
+    function idk(){ if(!current) return; total++; streak=0; els.feedback.innerHTML = `<div class='no'>✗ Marked as unknown.</div><div class='hint'>Answer: ${escapeHtml(els.answer.dataset.target||'')}</div>`; locked=true; updatePills(); }
+    function showAnswer(){ if(!current) return; els.feedback.innerHTML = `<div class='hint'>Answer: ${escapeHtml(els.answer.dataset.target||'')}</div>`; }
+    function stopShowing(){ if(!current) return; locked=false; next(); }
+    function skip(){ locked=false; next(); }
+
+    function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+    // --- admin helpers ---
+    function populateChapterSelect(){ els.chapterSelect.innerHTML = ''; Object.keys(chapters).forEach(ch=>{ const opt = document.createElement('option'); opt.value=ch; opt.textContent=ch; els.chapterSelect.appendChild(opt); }); }
+
+    function requirePasswordMatches(pw){ const stored = localStorage.getItem(PW_KEY) || btoa('admin'); return btoa(pw) === stored; }
+
+    function addVocabToChapter(chapter, es, en){ if(!chapter) return false; if(!chapters[chapter]) chapters[chapter]=[]; chapters[chapter].push({es:es.trim(), en:en.trim()}); saveChapters(chapters); populateChapterSelect(); return true; }
+
+    function parseQuizletText(text){
+      const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+      const out = [];
+      // if tab-separated lines
+      if(lines.some(l=>l.includes('\t'))){
+        for(const l of lines){ const parts = l.split('\t'); if(parts.length>=2) out.push({es:parts[0].trim(), en:parts[1].trim()}); }
+        return out;
+      }
+      // otherwise assume alternating lines: term, definition
+      for(let i=0;i+1<lines.length;i+=2){ out.push({es:lines[i], en:lines[i+1]}); }
+      return out;
+    }
+
+    // --- events ---
+    els.startBtn.addEventListener('click', start);
+    els.checkBtn.addEventListener('click', check);
+    els.idkBtn.addEventListener('click', idk);
+    els.showBtn.addEventListener('click', showAnswer);
+    els.stopBtn.addEventListener('click', stopShowing);
+    els.skipBtn.addEventListener('click', skip);
+
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ if(document.activeElement===els.answer){ e.preventDefault(); check(); } } if(e.key==='ArrowRight'){ if(!locked) next(); } if(e.key==='Escape'){ if(locked) stopShowing(); } });
+
+    els.adminBtn.addEventListener('click', ()=>{ els.adminPanel.classList.add('show'); els.adminPanel.setAttribute('aria-hidden','false'); els.adminMsg.textContent=''; els.adminChapter.value = els.chapterSelect.value || '' });
+    els.closeAdmin.addEventListener('click', ()=>{ els.adminPanel.classList.remove('show'); els.adminPanel.setAttribute('aria-hidden','true'); });
+
+    els.addVocabBtn.addEventListener('click', ()=>{
+      const pw = els.adminPassword.value || '';
+      if(!requirePasswordMatches(pw)){ els.adminMsg.textContent = 'Password incorrect.'; return; }
+      const ch = (els.adminChapter.value || '').trim(); const es = (els.adminEs.value || '').trim(); const en = (els.adminEn.value || '').trim();
+      if(!ch || !es || !en){ els.adminMsg.textContent = 'Fill chapter, Spanish and English.'; return; }
+      addVocabToChapter(ch, es, en);
+      els.adminMsg.textContent = `Added to ${ch}.`;
+      els.adminEs.value=''; els.adminEn.value=''; saveChapters(chapters);
+    });
+
+    els.importQuizletBtn.addEventListener('click', ()=>{
+      const pw = els.quizletPassword.value || '';
+      if(!requirePasswordMatches(pw)){ els.adminMsg.textContent = 'Password incorrect.'; return; }
+      const ch = (els.adminChapter.value || '').trim(); if(!ch){ els.adminMsg.textContent='Enter chapter name.'; return; }
+      const parsed = parseQuizletText(els.quizletText.value || ''); if(parsed.length===0){ els.adminMsg.textContent='No valid pairs found.'; return; }
+      if(!chapters[ch]) chapters[ch]=[];
+      for(const p of parsed){ chapters[ch].push({es:p.es, en:p.en}); }
+      saveChapters(chapters); populateChapterSelect(); els.adminMsg.textContent = `Imported ${parsed.length} items into ${ch}.`;
+      els.quizletText.value='';
+    });
+
+    els.changePasswordBtn.addEventListener('click', ()=>{
+      const cur = (els.curPassword.value||''); const nw = (els.newPassword.value||'');
+      if(!requirePasswordMatches(cur)){ els.adminMsg.textContent='Current password incorrect.'; return; }
+      if(!nw){ els.adminMsg.textContent='Enter a new password.'; return; }
+      localStorage.setItem(PW_KEY, btoa(nw)); els.adminMsg.textContent='Password changed.'; els.curPassword.value=''; els.newPassword.value='';
+    });
+
+    // --- init ---
+    populateChapterSelect();
+    updatePills();
+
+  </script>
+</body>
+</html>

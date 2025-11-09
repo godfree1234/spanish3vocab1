@@ -1,0 +1,11 @@
+{
+  "name": "spanish-vocab-practice",
+  "version": "1.0.0",
+  "description": "Single-file Spanish vocab practice app (typing test)",
+  "scripts": {
+    "start": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "author": "",
+  "license": "MIT"
+}
